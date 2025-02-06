@@ -1,0 +1,46 @@
+## 1. First, create and upload a Docker image with the required dependencies: Use chatGPT or copilot to create Dockerfile 
+For example, <br>
+FROM rocker/r-base:latest
+
+# Install system dependencies
+RUN apt-get update && apt-get install -y \
+    libcurl4-openssl-dev \
+    libssl-dev \
+    libxml2-dev \
+    zlib1g-dev \
+    parallel \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install R packages
+RUN R -e "install.packages(c('data.table', 'R.utils', 'coloc', 'susieR'), repos='https://cran.rstudio.com/')"
+
+# Create directories
+RUN mkdir -p /opt/notebooks/coloc_results
+RUN mkdir -p /opt/notebooks/codes
+
+# Copy the R script
+COPY run_coloc_gene_base.r /opt/notebooks/codes/
+COPY run_coloc_parallel.sh /opt/notebooks/
+
+WORKDIR /opt/notebooks
+
+## 2. Build and upload the Docker image:
+# Build the image
+docker build -t coloc-analysis .
+
+# Save it
+docker save coloc-analysis > coloc-analysis.tar
+
+# Upload to DNAnexus
+dx upload coloc-analysis.tar
+
+## 3. Run the analysis using swiss-army-knife:
+dx run swiss-army-knife \
+    -iin="${GWAS_INPUT_DIR_FILE_ID}" \
+    -iin="${EQTL_INPUT_DIR_FILE_ID}" \
+    -iin="${EQTL_INDEX_FILE_ID}" \
+    -iimage_file="file-xxxx" \
+    -icmd="bash run_coloc_parallel.sh /mnt/project/input1 /mnt/project/input2" \
+    --instance-type "mem2_ssd1_v2_x4" \
+    --destination="project-Gv45qjQ09Vk2p6X7q5xJ42PV:/analysis_KJ/coloc_gwas_eqtls/results/"
+    
