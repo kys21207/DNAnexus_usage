@@ -24,6 +24,10 @@ For example gwaslab <br>
 conda env create -n gwaslab_test -c conda-forge python=3.9 <br>
 conda activate gwaslab <br>
 pip install gwaslab <br>
+For example r-packages <br>
+conda create -n env <br>
+conda activate env <br>
+conda install r-R.utils r-susieR <br>
 
 ### 3. docker
 Create a docker image or get a docker image created by an app <br>
